@@ -32,3 +32,9 @@ https://core.telegram.org/bots
 
 Connecting and enabling the Raspberry Pi Camera:
 https://www.raspberrypi.org/learning/getting-started-with-picamera/
+
+If you want to start the script at boot, add this to the bottom of /etc/rc.local, before exit 0 ( sudo nano /etc/rc.local )
+```
+cd rpi_telegram_bot
+python rpi_telegram_bot.py BotToken ChatID
+```
