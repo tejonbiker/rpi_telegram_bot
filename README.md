@@ -15,9 +15,9 @@ Hardware requirements:
 
 Software Requirements:
 - Rasbian Jessi Lite 2017-04-10 (tested)
-- pip
-- telepot
-- MP4Box
+- pip ( sudo apt-get install python-pip )
+- telepot ( sudo pip install telepot )
+- MP4Box ( sudo apt-get install gpac )
 - PiCamera (is installed by default in the latest Raspbian)
 
 How to run:
