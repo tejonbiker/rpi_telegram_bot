@@ -130,7 +130,7 @@ def handle(msg):
 		for effect in photo_effects_list:
 			photo_options=photo_options + tabulator + effect
 
-		bot.sendMessage(chat_id,"Comandos disponibles:\n >photo: Captura una fotografia,efectos:"+photo_options+"\n >video: Captura un video de 10 seg\n >slow: Captura un video a 90 fps de 5 seg\n >location: envia una muestra de punto gps\n >sound: envia una muestra de audio")
+		bot.sendMessage(chat_id,"Comandos disponibles:\n >photo: Captura una fotografia,efectos:"+photo_options+"\n >video: Captura un video de 10 seg\n >slow: Captura un video a 90 fps de 5 seg\n >location: envia una muestra de punto gps\n >sound: envia una muestra de audio\n >log: adjunta el archivo /var/log/messages")
 		
 	#Want to shutdown?
 	elif(command[0]=="shutdown"):
