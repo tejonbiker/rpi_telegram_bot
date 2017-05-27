@@ -1,4 +1,7 @@
 # rpi_telegram_bot
+
+![Raspberry Pi dissasembled](photos/fatherbot_pi.png "Fatherbot with Pi")
+
 In this little proyect two topics are demonstrared: Telegram Bot usage and accessing Raspberry Pi camera from Python
 
 ![Raspberry Pi dissasembled](photos/IMG_20170513_163600745.jpg "Raspberry Pi Zero W with camera and case")
