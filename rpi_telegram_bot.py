@@ -4,8 +4,10 @@ import time
 import thread
 import os
 import urllib2
+from fractions import Fraction
 from io import BytesIO
 from picamera import PiCamera
+import threading
 
 '''
 Jose Federico Ramos Ortega 
@@ -23,6 +25,13 @@ https://github.com/tejonbiker/rpi_telegram_bot
 #photo_effects_list=["emboss","gpen","pastel","sketch","cartoon"]
 photo_effects_list=['cartoon','negative', 'sketch', 'denoise', 'emboss', 'oilpaint', 'hatch', 'gpen', 'pastel', 'watercolor', 'film', 'blur', 'saturation']
 restricted_id_chat=0
+
+def send_messages_lowlight(chat_id,bot):
+	time.sleep(18)
+	bot.sendMessage(chat_id,"Iniciando captura")
+	time.sleep(10)
+	bot.sendMessage(chat_id,"Fin de Captura")
+	return	
 
 #This loop handles the receiving of the messages of the bot
 def handle(msg):
@@ -43,6 +52,9 @@ def handle(msg):
 			
 	#want to take a photo?
 	if(command[0]=="photo"):
+
+		print "Camara Res: "
+		print camera.resolution
 		bot.sendMessage(chat_id,"Tomando foto")
 
 		photo_effect="none";
@@ -65,13 +77,19 @@ def handle(msg):
 		my_stream.seek(0)
 		current_effect=camera.image_effect 	#Save the current effect
 		camera.image_effect=photo_effect   	#Set the desired effect
-		camera.capture(my_stream,'jpeg')	#Capture the image
+		time.sleep(4)
+		#camera.capture(my_stream,'jpeg')	#Capture the image
+		camera.capture('file_direct.jpeg')
 		camera.image_effect=current_effect	#Restore the before effect
 		my_stream.seek(0)			#Rewind for a correct lecture of the stream
-		bot.sendPhoto(chat_id,my_stream)	#Send the image stream bytes to the chat
+		#bot.sendPhoto(chat_id,my_stream)	#Send the image stream bytes to the chat
+		#bot.sendPhoto(chat_id,open("file_direct.jpeg","rb"))
+		bot.sendDocument(chat_id,open("file_direct.jpeg","rb"))
 
 	#want a video?
 	elif(command[0]=="video"):
+		current_resolution=camera.resolution            #Save the before resolution and framerate
+		camera.resolution=(1900,1080)
 		bot.sendMessage(chat_id,"Tomando video, espere...")
 
 		photo_effect="none";
@@ -98,6 +116,8 @@ def handle(msg):
 		bot.sendMessage(chat_id,"adjuntando...")		#Send message: "attaching"
 		bot.sendVideo(chat_id,open("my_video.mp4","rb"));	#Send video file (for some reason converted to GIF)
 
+		camera.resolution=current_resolution;
+
 	#want a slow motion video effect?
 	elif(command[0]=="slow"):
 		bot.sendMessage(chat_id,"Tomando video, espere...")
@@ -121,6 +141,55 @@ def handle(msg):
                 os.system("MP4Box -add my_video.h264 my_video.mp4")	#Convert to mp4 via os commands
                 bot.sendMessage(chat_id,"adjuntando...")		#Send message: attaching
                 bot.sendVideo(chat_id,open("my_video.mp4","rb"));	#Attach video file
+
+	elif(command[0]=="lowlight"):
+		bot.sendMessage(chat_id,"Comando recibido")
+		before_ss=camera.shutter_speed;
+		before_fps=camera.framerate;
+		before_exposure_mode=camera.exposure_mode
+		before_iso=camera.iso
+
+		#camera.framerate=Fraction(1,1);
+		camera.framerate=Fraction(1, 10);
+
+		camera.exposure_mode = 'off'
+    		camera.iso = 100
+
+		bot.sendMessage(chat_id,"Camara ajustada, esperando estabilizacion (20 seg)")
+
+		if(len(command)>1):
+			camera.shutter_speed=int(command[1]);
+		else:
+			camera.shutter_speed=10000000
+
+		bot.sendMessage(chat_id,"obturador a :" + str(camera.shutter_speed)+ " usec")
+
+		time.sleep(20)
+
+		print "Camera mode changed\n"
+
+		bot.sendMessage(chat_id,"capturando...")
+		my_stream.seek(0)
+
+		t=threading.Thread(target=send_messages_lowlight,args=(chat_id,bot,))
+		t.start()
+                camera.capture(my_stream,'jpeg')        #Capture the image
+
+                my_stream.seek(0)                       #Rewind for a correct lecture of the stream
+		bot.sendMessage(chat_id,"adjuntando...")
+                #bot.sendPhoto(chat_id,my_stream)        #Send the image stream bytes to the chat
+		bot.sendDocument(chat_id,my_stream)
+
+		my_stream.seek(0)
+		photo_file=open("test_save_file.jpg", "wb")
+		#photo_file.write(my_stream.read());
+		photo_file.write("12345");
+		photo_file.close()
+
+		camera.shutter_speed=before_ss;
+		camera.framerate=before_fps;
+		camera.exposure_mode=before_exposure_mode
+                camera.iso=before_iso
 
 	
 	#want help? display the commands and some explanations
@@ -160,13 +229,15 @@ bot.message_loop(handle)			#setup the callback function
 print("Escuchando")
 
 my_stream=BytesIO()			#Start the variable to handle the byte stream image
-camera = PiCamera()			#Instance of the camera
+camera = PiCamera(sensor_mode=0)	#Instance of the camera
 #camera.resolution = (1024, 768)	#If you want setup resolution
+camera.resolution =(3280,2464)          #Full HD for photos and videos
+print camera.resolution
 
 camera.start_preview()			#Start a preview
-
 					#Camera Warn-Up time
 time.sleep(2)
 
 while 1:				#Polling the main thread
 	time.sleep(1)
+
